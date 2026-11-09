@@ -35,11 +35,24 @@ export function outlinePath(outline: number[][], map: MapPoint = identity): stri
 }
 
 /**
- * 2D context tuned for live ink: `desynchronized` lets the browser show strokes
- * without waiting for the page compositor (lower latency where supported).
+ * 2D context for the live-ink overlay.
+ * Deliberately NOT `desynchronized`: on transparent overlays some browsers keep
+ * showing a stale frame after the canvas is cleared/resized, which made erased
+ * strokes stay visible until the next pen stroke.
  */
 export function liveContext(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
-  return (canvas.getContext('2d', { desynchronized: true }) ?? canvas.getContext('2d'))!
+  return canvas.getContext('2d')!
+}
+
+/** Wipe a canvas and release its memory. */
+export function clearCanvas(canvas: HTMLCanvasElement) {
+  const ctx = canvas.getContext('2d')
+  if (ctx) {
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+  }
+  canvas.width = 0
+  canvas.height = 0
 }
 
 /** Points the browser predicts the pointer will reach next — drawn, never stored. */

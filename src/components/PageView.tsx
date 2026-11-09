@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 
 import type { PDFDocumentProxy } from '../lib/pdf'
 import type { HistoryAction } from '../lib/history'
 import type { Annotation, Box, ImageAnn, PageSize, Point, StrokeAnn, Tool } from '../types'
-import { canvasScale, liveContext, outlinePath, predictedPoints, strokeHit, strokeOutline, strokePath2D } from '../lib/ink'
+import { canvasScale, clearCanvas, liveContext, outlinePath, predictedPoints, strokeHit, strokeOutline, strokePath2D } from '../lib/ink'
 import { capturePointer, uid } from '../lib/uid'
 import { ImageBox } from './ImageBox'
 
@@ -115,10 +115,7 @@ function PageViewImpl({
   useLayoutEffect(() => {
     const c = inkCanvas.current
     if (!c) return
-    if (!drawing.current && liveCanvas.current) {
-      liveCanvas.current.width = 0
-      liveCanvas.current.height = 0
-    }
+    if (!drawing.current && liveCanvas.current) clearCanvas(liveCanvas.current)
     if (!visible) {
       c.width = 0
       c.height = 0
