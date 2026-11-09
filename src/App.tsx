@@ -10,6 +10,9 @@ import { PEN_COLORS } from './lib/colors'
 import { SignaturePanel } from './components/SignaturePanel'
 import { SignaturePad } from './components/SignaturePad'
 import { Icon } from './components/Icon'
+import { RatingDialog } from './components/RatingDialog'
+import { shouldAskForRating } from './lib/rating'
+import { track } from './lib/analytics'
 
 const SIG_KEY = 'papirma.signatures'
 const MIN_ZOOM = 0.25
@@ -52,6 +55,8 @@ export default function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [signatures, setSignatures] = useState<SavedSignature[]>(loadSignatures)
   const [padOpen, setPadOpen] = useState(false)
+  const [ratingOpen, setRatingOpen] = useState(false)
+  const inkTracked = useRef(false)
   const [loading, setLoading] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [dragging, setDragging] = useState(false)
@@ -84,6 +89,14 @@ export default function App() {
     window.addEventListener('beforeunload', warn)
     return () => window.removeEventListener('beforeunload', warn)
   }, [annotations.length])
+
+  // Count "used the pen" once per document, not once per stroke.
+  useEffect(() => {
+    if (!inkTracked.current && annotations.some((a) => a.kind === 'stroke')) {
+      inkTracked.current = true
+      track('pen_used')
+    }
+  }, [annotations])
 
   // ---- zoom (keeps the centre of the view steady) ----
   const changeZoom = useCallback(
@@ -125,6 +138,7 @@ export default function App() {
   const openFile = async (f: File) => {
     const name = f.name.toLowerCase()
     if (name.endsWith('.doc') || name.endsWith('.docx')) {
+      track('word_upload_attempted') // tells us how much Word support is wanted
       setNotice('Word files are coming soon. For now, save your document as a PDF and open that.')
       return
     }
@@ -145,10 +159,13 @@ export default function App() {
       dispatch({ type: 'reset' })
       setSelectedId(null)
       setTool('pen')
+      inkTracked.current = false
+      track('document_opened', { pages: doc.numPages })
       setZoom(fitZoom(Math.max(...sizes.map((s) => s.width))))
       scrollEl?.scrollTo({ top: 0 })
     } catch (err) {
       const isPassword = err instanceof Error && err.name === 'PasswordException'
+      track('document_open_failed', { reason: isPassword ? 'password' : 'unreadable' })
       setNotice(isPassword ? 'This PDF is password-protected. Remove the password and try again.' : 'Sorry, that PDF could not be opened.')
     } finally {
       setLoading(false)
@@ -182,21 +199,23 @@ export default function App() {
       const y = Math.min(Math.max(0, (cy - rect.top) / zoom - h / 2), size.height - h)
       const item: ImageAnn = { id: uid(), kind: 'image', page, x, y, w, h, src: sig.src }
       dispatch({ type: 'add', item })
+      track('signature_placed')
       setSelectedId(item.id)
       setTool('select')
     },
     [scrollEl, pageSizes, zoom],
   )
 
-  const addSignature = (s: { src: string; w: number; h: number }) => {
+  const addSignature = (s: { src: string; w: number; h: number }, method: 'drawn' | 'uploaded') => {
     const sig: SavedSignature = { id: uid(), ...s }
+    track('signature_created', { method })
     setSignatures((list) => [sig, ...list])
     if (pdf) placeSignature(sig)
   }
 
   const uploadSignature = async (f: File) => {
     try {
-      addSignature(await prepareSignatureImage(await readFileAsDataURL(f)))
+      addSignature(await prepareSignatureImage(await readFileAsDataURL(f)), 'uploaded')
     } catch {
       setNotice('That image could not be read. Try a PNG or JPG.')
     }
@@ -211,6 +230,13 @@ export default function App() {
       const { exportSignedPdf, downloadBytes } = await import('./lib/exportPdf')
       const bytes = await exportSignedPdf(file.bytes, pdf, annotations)
       downloadBytes(bytes, file.name.replace(/\.pdf$/i, '') + '-signed.pdf')
+      track('pdf_downloaded', {
+        pages: pdf.numPages,
+        strokes: annotations.filter((a) => a.kind === 'stroke').length,
+        signatures: annotations.filter((a) => a.kind === 'image').length,
+      })
+      // First-time users get asked for a rating once, just after their first download.
+      if (shouldAskForRating()) setTimeout(() => setRatingOpen(true), 700)
     } catch (err) {
       console.error(err)
       setNotice('Something went wrong while creating the PDF.')
@@ -405,13 +431,15 @@ export default function App() {
         </div>
       )}
 
+      {ratingOpen && <RatingDialog onClose={() => setRatingOpen(false)} />}
+
       {padOpen && (
         <SignaturePad
           initialColor={penColor}
           onClose={() => setPadOpen(false)}
           onSave={(s) => {
             setPadOpen(false)
-            addSignature(s)
+            addSignature(s, 'drawn')
           }}
         />
       )}
