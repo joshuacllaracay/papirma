@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 
 import type { PDFDocumentProxy } from '../lib/pdf'
 import type { HistoryAction } from '../lib/history'
 import type { Annotation, Box, ImageAnn, PageSize, Point, StrokeAnn, Tool } from '../types'
-import { canvasScale, outlinePath, strokeHit, strokeOutline, strokePath2D } from '../lib/ink'
+import { canvasScale, liveContext, outlinePath, predictedPoints, strokeHit, strokeOutline, strokePath2D } from '../lib/ink'
 import { capturePointer, uid } from '../lib/uid'
 import { ImageBox } from './ImageBox'
 
@@ -30,6 +30,7 @@ interface Drawing {
   pointerId: number
   rect: DOMRect
   points: Point[]
+  predicted: Point[]
   simulate: boolean
   scale: number
 }
@@ -140,12 +141,13 @@ function PageViewImpl({
     const d = drawing.current
     const c = liveCanvas.current
     if (!d || !c) return
-    const ctx = c.getContext('2d')!
+    const ctx = liveContext(c)
     ctx.setTransform(1, 0, 0, 1, 0, 0)
     ctx.clearRect(0, 0, c.width, c.height)
     ctx.setTransform(d.scale, 0, 0, d.scale, 0, 0)
     ctx.fillStyle = penColor
-    ctx.fill(new Path2D(outlinePath(strokeOutline(d.points, penSize, d.simulate))))
+    const pts = d.predicted.length ? [...d.points, ...d.predicted] : d.points
+    ctx.fill(new Path2D(outlinePath(strokeOutline(pts, penSize, d.simulate))))
   }, [penColor, penSize])
 
   const toPoint = (ev: PointerEvent, rect: DOMRect): Point => [
@@ -187,7 +189,7 @@ function PageViewImpl({
       const c = liveCanvas.current!
       c.width = Math.round(size.width * scale)
       c.height = Math.round(size.height * scale)
-      drawing.current = { pointerId: e.pointerId, rect, points: [p], simulate: e.pointerType !== 'pen', scale }
+      drawing.current = { pointerId: e.pointerId, rect, points: [p], predicted: [], simulate: e.pointerType !== 'pen', scale }
       raf.current ||= requestAnimationFrame(paintLive)
     } else {
       eraser.current = { pointerId: e.pointerId, rect, last: p }
@@ -202,6 +204,7 @@ function PageViewImpl({
     const d = drawing.current
     if (d && d.pointerId === e.pointerId) {
       for (const ev of list) d.points.push(toPoint(ev, d.rect))
+      d.predicted = predictedPoints(native, (ev) => toPoint(ev, d.rect))
       raf.current ||= requestAnimationFrame(paintLive)
       return
     }

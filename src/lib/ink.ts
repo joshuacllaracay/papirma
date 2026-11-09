@@ -5,8 +5,9 @@ export function strokeOutline(points: Point[], size: number, simulatePressure: b
   return getStroke(points, {
     size,
     thinning: 0.55,
-    smoothing: 0.6,
-    streamline: 0.45,
+    smoothing: 0.5,
+    // Low streamline = ink stays right under the pointer (high values make the line trail behind).
+    streamline: 0.2,
     simulatePressure,
     last: true,
   })
@@ -33,7 +34,21 @@ export function outlinePath(outline: number[][], map: MapPoint = identity): stri
   return d + 'Z'
 }
 
-const pathCache = new WeakMap<StrokeAnn, Path2D>()
+/**
+ * 2D context tuned for live ink: `desynchronized` lets the browser show strokes
+ * without waiting for the page compositor (lower latency where supported).
+ */
+export function liveContext(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
+  return (canvas.getContext('2d', { desynchronized: true }) ?? canvas.getContext('2d'))!
+}
+
+/** Points the browser predicts the pointer will reach next — drawn, never stored. */
+export function predictedPoints(e: PointerEvent, toPoint: (ev: PointerEvent) => Point): Point[] {
+  const pred = e.getPredictedEvents?.() ?? []
+  return pred.slice(0, 2).map(toPoint)
+}
+
+const pathCache =new WeakMap<StrokeAnn, Path2D>()
 
 export function strokePath2D(s: StrokeAnn): Path2D {
   let p = pathCache.get(s)
