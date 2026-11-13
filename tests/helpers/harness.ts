@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { PGlite } from '@electric-sql/pglite'
 import { PDFDocument } from 'pdf-lib'
@@ -28,7 +28,10 @@ const SUPABASE_STUBS = `
   alter table storage.objects enable row level security;
 `
 
-const MIGRATION = readFileSync(new URL('../../supabase/migrations/0001_pro_signing.sql', import.meta.url), 'utf8')
+const MIGRATIONS_DIR = new URL('../../supabase/migrations/', import.meta.url)
+/** Every migration, applied in filename order — exactly what production runs. */
+const MIGRATIONS = readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith('.sql')).sort()
+  .map((f) => readFileSync(new URL(f, MIGRATIONS_DIR), 'utf8'))
 
 export interface TestDb {
   pg: PGlite
@@ -43,7 +46,7 @@ export interface TestDb {
 export async function createTestDb(): Promise<TestDb> {
   const pg = new PGlite()
   await pg.exec(SUPABASE_STUBS)
-  await pg.exec(MIGRATION)
+  for (const m of MIGRATIONS) await pg.exec(m)
 
   // PGlite is a single connection: switch role around each statement.
   let chain = Promise.resolve() as Promise<unknown>

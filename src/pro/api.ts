@@ -10,7 +10,7 @@ export class ApiError extends Error {
   }
 }
 
-/** JSON call to the Papirma API. Cookies (recipient session) ride along same-origin. */
+/** JSON call to the PirmaNest API. Cookies (recipient session) ride along same-origin. */
 export async function api<T>(path: string, opts: { method?: string; body?: unknown; token?: string } = {}): Promise<T> {
   const headers: Record<string, string> = {}
   if (opts.body !== undefined) headers['Content-Type'] = 'application/json'
@@ -47,7 +47,7 @@ export function describeError(err: unknown): string {
   if (err.code === 'invalid_pdf') return PDF_REASONS[String(err.body.reason)] ?? 'That PDF could not be used.'
   if (err.code === 'weak_password') return String(err.body.message ?? 'That password is too weak.')
   const messages: Record<string, string> = {
-    pro_required: 'This feature needs a Papirma Pro plan.',
+    pro_required: 'This feature needs a PirmaNest Pro plan.',
     unauthorized: 'Please sign in again.',
     duplicate_recipient: 'Each email address can only be added once.',
     has_open_invitations: 'Revoke the open invitations for this document before deleting it.',

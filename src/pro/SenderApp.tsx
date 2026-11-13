@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { api, describeError } from './api'
 import { getAuth, type ProAuth, type SenderSession } from './auth'
+import { track } from '../lib/analytics'
 
 type Mode = 'link' | 'password' | 'email_otp'
 
-interface Me { email: string; displayName: string; plan: 'free' | 'pro' }
+interface Me { email: string; displayName: string; plan: 'free' | 'pro'; proRequestedAt: string | null }
 interface DocumentItem {
   id: string
   title: string
@@ -64,12 +65,12 @@ export default function SenderApp() {
   }, [session])
 
   if (auth === undefined) return <Centered>Loading…</Centered>
-  if (auth === null) return <Centered>Papirma Pro sign-in isn’t configured on this site yet.</Centered>
+  if (auth === null) return <Centered>PirmaNest Pro sign-in isn’t configured on this site yet.</Centered>
 
   return (
     <div className="min-h-dvh bg-slate-50">
       <header className="flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-3">
-        <a href="/" className="flex items-center gap-2 font-semibold"><img src="/favicon.svg" alt="" className="h-7 w-7" />Papirma</a>
+        <a href="/" className="flex items-center gap-2 font-semibold"><img src="/favicon.svg" alt="" className="h-7 w-7" />PirmaNest</a>
         <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700">Pro</span>
         {auth.kind === 'dev' && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">Local dev</span>}
         {session && (
@@ -82,7 +83,7 @@ export default function SenderApp() {
       <main className="mx-auto max-w-4xl p-4 sm:p-6">
         {error && <Banner tone="error" onClose={() => setError(null)}>{error}</Banner>}
         {!session ? <SignIn auth={auth} /> : !me ? <p className="text-sm text-slate-400">Loading your account…</p>
-          : me.plan !== 'pro' ? <Banner tone="info">Sending documents for signature is part of Papirma Pro. Your account ({me.email}) is on the free plan.</Banner>
+          : me.plan !== 'pro' ? <RequestPro token={session.accessToken} me={me} onChange={setMe} onError={setError} />
           : <Library token={session.accessToken} onError={setError} />}
       </main>
     </div>
@@ -103,12 +104,54 @@ function Banner({ tone, children, onClose }: { tone: 'error' | 'info' | 'warn'; 
   )
 }
 
+function RequestPro({ token, me, onChange, onError }: { token: string; me: Me; onChange: (m: Me) => void; onError: (m: string) => void }) {
+  const [busy, setBusy] = useState(false)
+  const requested = !!me.proRequestedAt
+  return (
+    <div className="mx-auto mt-10 max-w-md rounded-2xl bg-white p-6 text-center shadow-sm ring-1 ring-slate-200">
+      <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800 ring-1 ring-amber-200">✦ PirmaNest Pro · ₱999 / month</span>
+      <h1 className="mt-4 text-lg font-semibold">{requested ? 'Your request is in' : 'Upgrade to send documents for signature'}</h1>
+      {requested ? (
+        <p className="mt-2 text-sm text-slate-600">
+          Thanks! We received your request on {new Date(me.proRequestedAt!).toLocaleDateString(undefined, { dateStyle: 'medium' })}. Once your account ({me.email}) is upgraded, your document library will appear here.
+        </p>
+      ) : (
+        <>
+          <p className="mt-2 text-sm text-slate-600">
+            Your account ({me.email}) is on the free plan. Online payment isn’t open yet — request early access and we’ll upgrade your account.
+          </p>
+          <button
+            type="button"
+            disabled={busy}
+            className={`${primary} mt-4 w-full py-3`}
+            onClick={async () => {
+              setBusy(true)
+              try {
+                const r = await api<{ proRequestedAt: string }>('me/pro-request', { token, body: {} })
+                track('pro_requested')
+                onChange({ ...me, proRequestedAt: r.proRequestedAt })
+              } catch (e) {
+                onError(describeError(e))
+              } finally {
+                setBusy(false)
+              }
+            }}
+          >
+            {busy ? 'Sending…' : 'Request Pro access'}
+          </button>
+        </>
+      )}
+      <a href="/pro" className="mt-3 block text-sm text-indigo-700 hover:underline">See what’s included in Pro</a>
+    </div>
+  )
+}
+
 function SignIn({ auth }: { auth: ProAuth }) {
   const [email, setEmail] = useState('')
   const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   return (
     <div className="mx-auto mt-10 max-w-sm rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-      <h1 className="text-lg font-semibold">Sign in to Papirma Pro</h1>
+      <h1 className="text-lg font-semibold">Sign in to PirmaNest Pro</h1>
       <p className="mt-1 text-sm text-slate-500">
         {auth.kind === 'dev' ? 'Local development: any email signs you in as a Pro user. No email is sent.' : 'We’ll email you a sign-in link. No password needed.'}
       </p>
@@ -382,7 +425,7 @@ function PasswordDialog({ title, items, onClose, children }: { title: string; it
         {items.length > 0 && (
           <>
             <p className="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
-              Share each password with its recipient <b>separately — by phone, SMS or chat, not email</b>. Papirma stores only a scrambled version, so these can’t be shown again.
+              Share each password with its recipient <b>separately — by phone, SMS or chat, not email</b>. PirmaNest stores only a scrambled version, so these can’t be shown again.
             </p>
             <ul className="mt-3 space-y-2">
               {items.map((it) => (

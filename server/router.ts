@@ -3,7 +3,7 @@ import type { Deps } from './deps.js'
 import { HttpError, notFound, unauthorized } from './errors.js'
 import { bytesEqual } from './crypto.js'
 import { clearSessionCookie, clientInfo, errorResponse, json, readJson, requireSameOrigin } from './http.js'
-import { UpdateProfile, authenticateSender, updateProfile } from './services/senders.js'
+import { UpdateProfile, authenticateSender, getProfile, requestPro, updateProfile } from './services/senders.js'
 import { CreateDocument, createDocument, createVersion, deleteDocument, finalizeVersion, listDocuments } from './services/documents.js'
 import {
   CreateInvitations, RevokeInvitation, createInvitations, listInvitations, reissueInvitation, resetPassword, revokeInvitation,
@@ -19,9 +19,12 @@ const Empty = z.object({}).strict()
 
 const routes: Array<[method: string, pattern: RegExp, handler: Handler]> = [
   // ---- sender ----
-  ['GET', /^me$/, async ({ request, deps }) => {
+  ['GET', /^me$/, async ({ request, deps }) =>
+    json(await getProfile(deps, await authenticateSender(deps, request)))],
+  ['POST', /^me\/pro-request$/, async ({ request, deps }) => {
     const s = await authenticateSender(deps, request)
-    return json({ email: s.email, displayName: s.displayName, plan: s.plan })
+    await readJson(request, Empty)
+    return json(await requestPro(deps, s))
   }],
   ['PATCH', /^me$/, async ({ request, deps }) => {
     const s = await authenticateSender(deps, request)

@@ -51,7 +51,7 @@ export function invitationEmail(i: InvitationEmailInput): OutgoingEmail {
         ? 'For your security, we will email you a one-time code when you open the link.'
         : 'Anyone with this link can open the document, so please do not forward this email.'
   const text = [
-    `${i.senderName} has asked you to sign ${what} using Papirma.`,
+    `${i.senderName} has asked you to sign ${what} using PirmaNest.`,
     '',
     `Open the document: ${i.link}`,
     '',
@@ -61,10 +61,10 @@ export function invitationEmail(i: InvitationEmailInput): OutgoingEmail {
     'If you were not expecting this, you can ignore this email.',
   ].join('\n')
   const html = `<!doctype html><html><body style="font-family:system-ui,sans-serif;color:#0f172a;line-height:1.5">
-<p><strong>${esc(i.senderName)}</strong> has asked you to sign ${esc(what)} using Papirma.</p>
+<p><strong>${esc(i.senderName)}</strong> has asked you to sign ${esc(what)} using PirmaNest.</p>
 <p><a href="${esc(i.link)}" style="display:inline-block;background:#4f46e5;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none">Open the document</a></p>
 <p>${esc(modeLine)}</p>
 <p style="color:#64748b">This link expires on ${esc(fmtDate(i.expiresAt))}. If you were not expecting this, you can ignore this email.</p>
 </body></html>`
-  return { to: i.to, subject: 'Papirma: signature requested', text, html }
+  return { to: i.to, subject: 'PirmaNest: signature requested', text, html }
 }

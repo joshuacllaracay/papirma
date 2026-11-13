@@ -76,7 +76,7 @@ export default function RecipientApp() {
     <div className="min-h-dvh bg-slate-100">
       <header className="flex items-center gap-2 border-b border-slate-200 bg-white px-4 py-3">
         <img src="/favicon.svg" alt="" className="h-7 w-7" />
-        <span className="font-semibold">Papirma</span>
+        <span className="font-semibold">PirmaNest</span>
         {screen.kind === 'document' && (
           <button type="button" className="ml-auto rounded-lg px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
             onClick={async () => { await api('r/logout', { body: {} }).catch(noop); setScreen({ kind: 'message', title: 'Signed out', body: 'You can open your invitation link again at any time before it expires.' }) }}>
@@ -111,7 +111,7 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 function PrivacyNote() {
   return (
     <p className="text-xs text-slate-500">
-      To keep a reliable record for the sender, Papirma logs when this invitation is opened and verified, including your IP address and browser type.
+      To keep a reliable record for the sender, PirmaNest logs when this invitation is opened and verified, including your IP address and browser type.
     </p>
   )
 }

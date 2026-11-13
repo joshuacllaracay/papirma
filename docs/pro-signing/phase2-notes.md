@@ -17,9 +17,16 @@ Status: **implemented and tested locally; not deployed.** Design: [phase1-assess
 
 **Email OTP (Mode C)** is intentionally rejected (`mode_not_available`) until Phase 3.
 
+## Go Pro / early access (added after Phase 2)
+
+* The app's user-facing name is now **PirmaNest** (internal identifiers such as `papirma_app` are unchanged).
+* Free editor header has a **Go Pro** button → `/pro` (benefits, Free vs Pro table, ₱999 / month, honest "coming soon" labels and legal wording).
+* No payments yet. A signed-in free user can tap **Request Pro access** (`POST /api/me/pro-request`), which records `profiles.pro_requested_at` once and never changes `plan`. The owner approves by SQL — see the comments in `supabase/migrations/0002_pro_requests.sql`.
+* Local dev: emails containing `+free@` sign in as free accounts, to test this flow.
+
 ## Tests (`npm test`)
 
-66 tests across 5 files, run against a real Postgres 16 engine in-process (PGlite) with the real migration applied, the app running as the restricted `papirma_app` role:
+70 tests across 6 files, run against a real Postgres 16 engine in-process (PGlite) with the real migration applied, the app running as the restricted `papirma_app` role:
 
 | File | Covers |
 |---|---|
@@ -47,7 +54,7 @@ Then open <http://localhost:5173/app>, sign in with any email (dev mode makes yo
 
 1. **Domain** (needed for email): buy one and add it to Vercel.
 2. **Supabase** — create a **dev** and a **prod** project in **Singapore**.
-   * SQL editor → run `supabase/migrations/0001_pro_signing.sql`.
+   * SQL editor → run `supabase/migrations/0001_pro_signing.sql`, then `0002_pro_requests.sql` (in order).
    * Enable the API role login with a long random password (store it in a password manager):
      `alter role papirma_app with login password '<random 32+ chars>';`
    * Auth → enable Email (magic link); set Site URL and redirect URL to `https://<domain>/app`. Optionally enable Google.

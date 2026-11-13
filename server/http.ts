@@ -42,7 +42,7 @@ export async function readJson<S extends z.ZodTypeAny>(request: Request, schema:
   return parsed.data
 }
 
-/** CSRF defence for state-changing requests: the Origin must be Papirma's own. */
+/** CSRF defence for state-changing requests: the Origin must be PirmaNest's own. */
 export function requireSameOrigin(request: Request, appOrigin: string) {
   if (['GET', 'HEAD', 'OPTIONS'].includes(request.method)) return
   if (request.headers.get('origin') !== appOrigin) throw forbidden('bad_origin')

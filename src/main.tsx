@@ -7,12 +7,14 @@ import { initAnalytics } from './lib/analytics'
 // Pro screens load on demand so the free editor stays as light as before.
 const SenderApp = lazy(() => import('./pro/SenderApp'))
 const RecipientApp = lazy(() => import('./pro/RecipientApp'))
+const ProPage = lazy(() => import('./pro/ProPage'))
 
 const path = window.location.pathname
 const isRecipient = path === '/s' || path.startsWith('/s/')
 const isSender = path === '/app' || path.startsWith('/app/')
+const isPricing = path === '/pro'
 
-// Recipients didn't sign up for Papirma: no analytics on signing pages (data minimization).
+// Recipients didn't sign up for PirmaNest: no analytics on signing pages (data minimization).
 if (!isRecipient) initAnalytics()
 
 const loading = <div className="grid h-dvh place-items-center text-sm text-slate-400">Loading…</div>
@@ -22,6 +24,10 @@ createRoot(document.getElementById('root')!).render(
     {isRecipient ? (
       <Suspense fallback={loading}>
         <RecipientApp />
+      </Suspense>
+    ) : isPricing ? (
+      <Suspense fallback={loading}>
+        <ProPage />
       </Suspense>
     ) : isSender ? (
       <Suspense fallback={loading}>

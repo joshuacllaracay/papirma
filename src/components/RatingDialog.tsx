@@ -48,7 +48,7 @@ export function RatingDialog({ onClose }: { onClose: () => void }) {
       className="fixed inset-0 z-50 grid place-items-center bg-slate-900/50 p-4"
       onPointerDown={(e) => e.target === e.currentTarget && dismiss()}
     >
-      <div className="relative w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl" role="dialog" aria-label="Rate Papirma">
+      <div className="relative w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl" role="dialog" aria-label="Rate PirmaNest">
         <button
           type="button"
           aria-label="Close"
@@ -62,12 +62,12 @@ export function RatingDialog({ onClose }: { onClose: () => void }) {
           <div className="py-6">
             <div className="text-3xl">🎉</div>
             <h2 className="mt-2 text-lg font-semibold">Thank you!</h2>
-            <p className="mt-1 text-sm text-slate-500">Your feedback helps make Papirma better.</p>
+            <p className="mt-1 text-sm text-slate-500">Your feedback helps make PirmaNest better.</p>
           </div>
         ) : (
           <>
             <h2 className="text-lg font-semibold">Your PDF is signed!</h2>
-            <p className="mt-1 text-sm text-slate-500">How was your experience with Papirma?</p>
+            <p className="mt-1 text-sm text-slate-500">How was your experience with PirmaNest?</p>
 
             <div className="mt-4 flex justify-center gap-1" onPointerLeave={() => setHover(0)} role="radiogroup" aria-label="Rating">
               {[1, 2, 3, 4, 5].map((n) => (

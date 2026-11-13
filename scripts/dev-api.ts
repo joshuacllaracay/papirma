@@ -3,7 +3,8 @@
  *
  * Runs the real API router against an in-process Postgres (PGlite) with the real
  * migration, plus local stand-ins for Supabase Auth, Storage and email:
- *   • sign in with any email (no password) — the account is made Pro automatically
+ *   • sign in with any email (no password) — made Pro automatically, unless the
+ *     address contains "+free@" (e.g. you+free@example.com), to test the free-plan flow
  *   • files are kept in memory and served through short-lived signed URLs
  *   • emails are printed here and listed at http://localhost:5173/__dev/mail
  *
@@ -44,8 +45,8 @@ async function main() {
         const userId = `${id.slice(0, 8)}-${id.slice(8, 12)}-4${id.slice(13, 16)}-a${id.slice(17, 20)}-${id.slice(20, 32)}`
         await db.admin.query(`insert into auth.users (id, email) values ($1, $2) on conflict (id) do nothing`, [userId, email])
         await db.admin.query(
-          `insert into public.profiles (id, display_name, plan) values ($1, $2, 'pro') on conflict (id) do nothing`,
-          [userId, email.split('@')[0]])
+          `insert into public.profiles (id, display_name, plan) values ($1, $2, $3) on conflict (id) do nothing`,
+          [userId, email.split('@')[0], email.includes('+free@') ? 'free' : 'pro'])
         return { userId, email }
       },
     },
@@ -139,7 +140,7 @@ async function main() {
       send(res, 500, 'dev server error')
     }
   }).listen(PORT, () => {
-    console.log(`Papirma dev API on http://localhost:${PORT} (proxied from ${APP_ORIGIN}/api)`)
+    console.log(`PirmaNest dev API on http://localhost:${PORT} (proxied from ${APP_ORIGIN}/api)`)
     console.log(`Dev mailbox: ${APP_ORIGIN}/__dev/mail`)
   })
 }

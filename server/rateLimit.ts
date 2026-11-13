@@ -1,7 +1,7 @@
 import type { Queryable } from './db.js'
 import { one } from './db.js'
 
-/** Fixed-window counters in Postgres — enough at Papirma's scale, no Redis needed. */
+/** Fixed-window counters in Postgres — enough at PirmaNest's scale, no Redis needed. */
 
 /** Record one hit and return the count in the current window. */
 export async function hit(q: Queryable, key: string, windowSec: number): Promise<number> {

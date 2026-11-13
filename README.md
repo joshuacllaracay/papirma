@@ -1,4 +1,4 @@
-# Papirma
+# PirmaNest
 
 Sign PDFs in the browser — draw with a pen, or place a saved signature — and download the signed PDF.
 Documents never leave your device: rendering, signing and PDF export all run client-side.
@@ -28,7 +28,7 @@ Open http://localhost:5173.
 Vite · React · TypeScript · Tailwind CSS · [pdf.js](https://github.com/mozilla/pdf.js) (rendering) ·
 [perfect-freehand](https://github.com/steveruizok/perfect-freehand) (ink) · [pdf-lib](https://pdf-lib.js.org) (export)
 
-## Papirma Pro (in development)
+## PirmaNest Pro (in development)
 
 Secure recipient signing (password-protected links, evidence trail). Design and status:
 [docs/pro-signing/phase1-assessment.md](docs/pro-signing/phase1-assessment.md) ·
