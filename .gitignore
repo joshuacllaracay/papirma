@@ -23,3 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 papirma/
+
+# Environment files hold secrets — never commit them (the example is safe)
+.env
+.env.*
+!.env.example

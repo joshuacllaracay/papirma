@@ -28,6 +28,17 @@ Open http://localhost:5173.
 Vite · React · TypeScript · Tailwind CSS · [pdf.js](https://github.com/mozilla/pdf.js) (rendering) ·
 [perfect-freehand](https://github.com/steveruizok/perfect-freehand) (ink) · [pdf-lib](https://pdf-lib.js.org) (export)
 
+## Papirma Pro (in development)
+
+Secure recipient signing (password-protected links, evidence trail). Design and status:
+[docs/pro-signing/phase1-assessment.md](docs/pro-signing/phase1-assessment.md) ·
+[docs/pro-signing/phase2-notes.md](docs/pro-signing/phase2-notes.md).
+
+```bash
+npm test          # security test suite (in-process Postgres, no Docker)
+npm run dev:api   # local Pro backend for development
+```
+
 ## Roadmap
 
 - Word (.docx) upload — converted to PDF via a small Gotenberg (LibreOffice) service

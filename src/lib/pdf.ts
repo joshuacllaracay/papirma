@@ -9,7 +9,8 @@ export type { PDFDocumentProxy }
 
 /** pdf.js takes ownership of the buffer it is given, so it gets a copy. */
 export function loadPdf(bytes: Uint8Array): Promise<PDFDocumentProxy> {
-  return pdfjs.getDocument({ data: bytes.slice() }).promise
+  // isEvalSupported: false — never let pdf.js compile code from a document (defence in depth).
+  return pdfjs.getDocument({ data: bytes.slice(), isEvalSupported: false }).promise
 }
 
 export async function getPageSizes(pdf: PDFDocumentProxy): Promise<PageSize[]> {
